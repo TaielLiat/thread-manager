@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thread Manager</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .checkboxes {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<h1>Thread Manager</h1>
+<div class="checkboxes">
+    <label><input type="checkbox" id="showId" checked> ID</label>
+    <label><input type="checkbox" id="showName" checked> Nombre</label>
+    <label><input type="checkbox" id="showState" checked> Estado</label>
+    <label><input type="checkbox" id="showPriority"> Prioridad</label>
+    <label><input type="checkbox" id="showStackTrace"> Stack Trace</label>
+    <label><input type="checkbox" id="showExecutionTime"> Tiempo de ejecución</label>
+    <label><input type="checkbox" id="showCpuUsage"> Uso de recursos CPU</label>
+    <label><input type="checkbox" id="showMemoryUsage"> Uso de recursos Memoria</label>
+    <label><input type="checkbox" id="showSynchronization"> Sincronización y bloqueos</label>
+    <label><input type="checkbox" id="showDeadlocks"> Deadlocks</label>
+    <label><input type="checkbox" id="showDependentThreads"> Hilos dependientes</label>
+</div>
+
+<table id="threadsTable">
+    <thead>
+    <tr>
+        <th id="thId">ID</th>
+        <th id="thName">Nombre</th>
+        <th id="thState">Estado</th>
+        <th id="thPriority" style="display:none">Prioridad</th>
+        <th id="thStackTrace" style="display:none">Stack Trace</th>
+        <th id="thExecutionTime" style="display:none">Tiempo de ejecución</th>
+        <th id="thCpuUsage" style="display:none">Uso de recursos CPU</th>
+        <th id="thMemoryUsage" style="display:none">Uso de recursos Memoria</th>
+        <th id="thSynchronization" style="display:none">Sincronización y bloqueos</th>
+        <th id="thDeadlocks" style="display:none">Deadlocks</th>
+        <th id="thDependentThreads" style="display:none">Hilos dependientes</th>
+    </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<div id="thread-info"></div>
+<script>
+    // Función para mostrar u ocultar columnas según el estado de los checkboxes
+    function toggleColumns() {
+        const checkboxes = document.querySelectorAll('.checkboxes input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            const columnId = 'th' + checkbox.id.charAt(0).toUpperCase() + checkbox.id.slice(1);
+            const cells = document.querySelectorAll(`#threadsTable td:nth-child(${Array.from(checkboxes).indexOf(checkbox) + 1})`);
+
+            if (checkbox.checked) {
+                document.getElementById(columnId).style.display = '';
+                cells.forEach(cell => cell.style.display = '');
+            } else {
+                document.getElementById(columnId).style.display = 'none';
+                cells.forEach(cell => cell.style.display = 'none');
+            }
+        });
+    }
+
+    // Configurar eventos de cambio en los checkboxes
+    document.querySelectorAll('.checkboxes input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', toggleColumns);
+    });
+
+    // Inicializar la tabla con las columnas seleccionadas
+    toggleColumns();
+
+    // Obtener los datos de los hilos desde el API y llenar la tabla
+    fetch('/api/threads')
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.querySelector('#threadsTable tbody');
+            tableBody.innerHTML = ''; // Limpiar la tabla antes de llenarla
+
+            data.forEach(thread => {
+                const row = document.createElement('tr');
+
+                // Crear celdas de acuerdo a los datos
+                const idCell = document.createElement('td');
+                idCell.textContent = thread.id || 'N/A';
+                row.appendChild(idCell);
+
+                const nameCell = document.createElement('td');
+                nameCell.textContent = thread.name || 'N/A';
+                row.appendChild(nameCell);
+
+                const stateCell = document.createElement('td');
+                stateCell.textContent = thread.state || 'N/A';
+                row.appendChild(stateCell);
+
+                // Usamos un valor seguro para cada celda
+                const getValue = (key) => thread[key] || 'N/A';
+
+                // Crear celdas para las otras columnas y aplicar visibilidad según los checkboxes
+                const priorityCell = document.createElement('td');
+                priorityCell.textContent = getValue('priority');
+                priorityCell.style.display = document.getElementById('showPriority').checked ? '' : 'none';
+                row.appendChild(priorityCell);
+
+                const stackTraceCell = document.createElement('td');
+                stackTraceCell.textContent = getValue('stackTrace');
+                stackTraceCell.style.display = document.getElementById('showStackTrace').checked ? '' : 'none';
+                row.appendChild(stackTraceCell);
+
+                const executionTimeCell = document.createElement('td');
+                executionTimeCell.textContent = getValue('executionTime');
+                executionTimeCell.style.display = document.getElementById('showExecutionTime').checked ? '' : 'none';
+                row.appendChild(executionTimeCell);
+
+                const cpuUsageCell = document.createElement('td');
+                cpuUsageCell.textContent = getValue('cpuUsage');
+                cpuUsageCell.style.display = document.getElementById('showCpuUsage').checked ? '' : 'none';
+                row.appendChild(cpuUsageCell);
+
+                const memoryUsageCell = document.createElement('td');
+                memoryUsageCell.textContent = getValue('memoryUsage');
+                memoryUsageCell.style.display = document.getElementById('showMemoryUsage').checked ? '' : 'none';
+                row.appendChild(memoryUsageCell);
+
+                const synchronizationCell = document.createElement('td');
+                synchronizationCell.textContent = getValue('synchronization');
+                synchronizationCell.style.display = document.getElementById('showSynchronization').checked ? '' : 'none';
+                row.appendChild(synchronizationCell);
+
+                const deadlocksCell = document.createElement('td');
+                deadlocksCell.textContent = getValue('deadlocks');
+                deadlocksCell.style.display = document.getElementById('showDeadlocks').checked ? '' : 'none';
+                row.appendChild(deadlocksCell);
+
+                const dependentThreadsCell = document.createElement('td');
+                dependentThreadsCell.textContent = getValue('dependentThreads');
+                dependentThreadsCell.style.display = document.getElementById('showDependentThreads').checked ? '' : 'none';
+                row.appendChild(dependentThreadsCell);
+
+                tableBody.appendChild(row);
+            });
+        })
+        .catch(error => console.error('Error fetching thread data:', error));
+</script>
+
+</body>
+</html>
